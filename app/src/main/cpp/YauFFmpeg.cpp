@@ -93,3 +93,13 @@ void YauFFmpeg::prepareFFmpeg() {
 
     javaCallHelper->onPrepare(THREAD_CHILD);
 }
+
+void YauFFmpeg::start() {
+    isPlaying = true;
+    if (audioChannel) {
+        audioChannel->play();
+    }
+    if (videoChannel) {
+        videoChannel->play();
+    }
+}

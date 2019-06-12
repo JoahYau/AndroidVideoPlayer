@@ -5,14 +5,15 @@
 #ifndef VIDEOPLAYER_VIDEOCHANNEL_H
 #define VIDEOPLAYER_VIDEOCHANNEL_H
 
-#include "JavaCallHelper.h"
-extern "C" {
-#include "libavcodec/avcodec.h"
-}
+#include "BaseChannel.h"
 
-class VideoChannel {
+class VideoChannel : public BaseChannel {
 public:
     VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext);
+
+    virtual void play();
+
+    virtual void stop();
 };
 
 

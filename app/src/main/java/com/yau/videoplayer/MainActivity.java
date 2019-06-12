@@ -17,7 +17,6 @@ import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
 
-    private SurfaceView mSvVideoPlayer;
     private SeekBar mSeekBar;
 
     private VideoPlayer mVideoPlayer;
@@ -35,9 +34,6 @@ public class MainActivity extends AppCompatActivity {
         initEvent();
         checkPermission();
 
-        mVideoPlayer = new VideoPlayer();
-        mVideoPlayer.setSurfaceView(mSvVideoPlayer);
-
         File file = new File(Environment.getExternalStorageDirectory(), "input.mp4");
         if (!file.exists()) {
             throw new IllegalArgumentException("=======================文件不存在");
@@ -46,8 +42,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initView() {
-        mSvVideoPlayer = findViewById(R.id.sv_video_player);
         mSeekBar = findViewById(R.id.seek_bar);
+
+        mVideoPlayer = new VideoPlayer();
+        SurfaceView svVideoPlayer = findViewById(R.id.sv_video_player);
+        mVideoPlayer.setSurfaceView(svVideoPlayer);
     }
 
     private void initEvent() {

@@ -5,9 +5,15 @@
 #ifndef VIDEOPLAYER_AUDIOCHANNEL_H
 #define VIDEOPLAYER_AUDIOCHANNEL_H
 
+#include "BaseChannel.h"
 
-class AudioChannel {
+class AudioChannel : public BaseChannel {
+public:
+    AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext);
 
+    virtual void play();
+
+    virtual void stop();
 };
 
 

@@ -44,5 +44,7 @@ Java_com_yau_videoplayer_player_VideoPlayer_nSetSurface(JNIEnv *env, jobject ins
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_yau_videoplayer_player_VideoPlayer_nStart(JNIEnv *env, jobject instance) {
-
+    if (yauFFmpeg) {
+        yauFFmpeg->start();
+    }
 }

@@ -24,7 +24,10 @@ public:
     void prepare();
     void prepareFFmpeg();
 
+    void start();
+
 private:
+    bool isPlaying;
     char *url;
     pthread_t pid_prepare;
     VideoChannel *videoChannel;
