@@ -49,7 +49,59 @@ public class VideoPlayer implements SurfaceHolder.Callback {
         mDataSource = dataSource;
     }
 
+    public void start() {
+        nStart();
+    }
+
     private native void nPrepare(String dataSource);
     private native void nSetSurface(Surface surface);
     private native void nStart();
+
+    public void onPrepare() {
+        if (mOnPrepareListener != null) {
+            mOnPrepareListener.onPrepare();
+        }
+    }
+
+    public void onProgress(int progress) {
+        if (mOnProgressListener != null) {
+            mOnProgressListener.onProgress(progress);
+        }
+    }
+
+    public void onError(int errorCode) {
+        if (mOnErrorListener != null) {
+            mOnErrorListener.onError(errorCode);
+        }
+    }
+
+    // region 接口
+    private OnPrepareListener mOnPrepareListener;
+    private OnProgressListener mOnProgressListener;
+    private OnErrorListener mOnErrorListener;
+
+    public void setOnPrepareListener(OnPrepareListener onPrepareListener) {
+        mOnPrepareListener = onPrepareListener;
+    }
+
+    public void setOnProgressListener(OnProgressListener onProgressListener) {
+        mOnProgressListener = onProgressListener;
+    }
+
+    public void setOnErrorListener(OnErrorListener onErrorListener) {
+        mOnErrorListener = onErrorListener;
+    }
+
+    public interface OnPrepareListener {
+        void onPrepare();
+    }
+
+    public interface OnProgressListener {
+        void onProgress(int progress);
+    }
+
+    public interface OnErrorListener {
+        void onError(int errorCode);
+    }
+    // endregion
 }

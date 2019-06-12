@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.4.1)
 
-file(GLOB SOURCE *.cpp)
+aux_source_directory(. SOURCE)
 
 set(LIBS-PATH ${CMAKE_SOURCE_DIR}/../../../libs/${ANDROID_ABI})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${LIBS-PATH}")

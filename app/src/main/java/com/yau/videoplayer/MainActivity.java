@@ -67,6 +67,13 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        mVideoPlayer.setOnPrepareListener(new VideoPlayer.OnPrepareListener() {
+            @Override
+            public void onPrepare() {
+                mVideoPlayer.start();
+            }
+        });
     }
 
     private void checkPermission() {
