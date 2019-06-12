@@ -23,13 +23,14 @@ public:
     ~YauFFmpeg();
     void prepare();
     void prepareFFmpeg();
-
     void start();
+    void play();
 
 private:
     bool isPlaying;
     char *url;
     pthread_t pid_prepare;
+    pthread_t pid_play;
     VideoChannel *videoChannel;
     AudioChannel *audioChannel;
     AVFormatContext *formatContext;

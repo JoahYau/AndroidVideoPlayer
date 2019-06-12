@@ -12,6 +12,13 @@ void *prepareFFmpeg_(void *args) {
     return nullptr;
 }
 
+void *play_(void *args) {
+    // 这里是回调函数，不能通过this来访问成员，所以要将整个对象传过来
+    auto *yauFFmpeg = static_cast<YauFFmpeg *>(args);
+    yauFFmpeg->play();
+    return nullptr;
+}
+
 YauFFmpeg::YauFFmpeg(JavaCallHelper *javaCallHelper_, const char *dataSource) : javaCallHelper(javaCallHelper_) {
     url = new char[strlen(dataSource) + 1];
     strcpy(url, dataSource);
@@ -101,5 +108,45 @@ void YauFFmpeg::start() {
     }
     if (videoChannel) {
         videoChannel->play();
+    }
+
+    pthread_create(&pid_play, nullptr, play_, this);
+}
+
+void YauFFmpeg::play() {
+    int ret;
+    while (isPlaying) {
+        // 生产速度远大于消费速度，所以这里达到一定数量则延缓10ms
+        if ((audioChannel && audioChannel->pkt_queue.size() > 100) ||
+                (videoChannel && videoChannel->pkt_queue.size() > 100)) {
+            av_usleep(1000 * 10);
+            continue;
+        }
+
+        AVPacket *packet = av_packet_alloc();
+        ret = av_read_frame(formatContext, packet);
+        if (ret == 0) {
+            if (audioChannel && packet->stream_index == audioChannel->channelId) {
+                audioChannel->pkt_queue.enQueue(packet);
+            } else if (videoChannel && packet->stream_index == videoChannel->channelId) {
+                videoChannel->pkt_queue.enQueue(packet);
+            }
+        } else if (ret == AVERROR_EOF) {
+            if (videoChannel->pkt_queue.empty() && videoChannel->frame_queue.empty() &&
+                audioChannel->pkt_queue.empty() && audioChannel->frame_queue.empty()) {
+                LOGE("播放完毕");
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+
+    isPlaying = false;
+    if (audioChannel) {
+        audioChannel->stop();
+    }
+    if (videoChannel) {
+        videoChannel->stop();
     }
 }
