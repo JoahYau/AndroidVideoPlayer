@@ -1,58 +1,89 @@
 package com.yau.videoplayer;
 
-import android.support.v7.app.AppCompatActivity;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceView;
 import android.view.View;
-import android.widget.Button;
+import android.view.WindowManager;
 import android.widget.SeekBar;
-import android.widget.TextView;
+
+import com.yau.videoplayer.player.VideoPlayer;
+
+import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
 
     private SurfaceView mSvVideoPlayer;
     private SeekBar mSeekBar;
-    private Button mBtnPlayPause;
 
-    private boolean mIsPlaying = false;
+    private VideoPlayer mVideoPlayer;
+    private int mProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 保持屏幕常亮
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
 
         initView();
         initEvent();
+        checkPermission();
+
+        mVideoPlayer = new VideoPlayer();
+        mVideoPlayer.setSurfaceView(mSvVideoPlayer);
+
+        File file = new File(Environment.getExternalStorageDirectory(), "input.mp4");
+        if (!file.exists()) {
+            throw new IllegalArgumentException("=======================文件不存在");
+        }
+        mVideoPlayer.setDataSource(file.getAbsolutePath());
     }
 
     private void initView() {
         mSvVideoPlayer = findViewById(R.id.sv_video_player);
         mSeekBar = findViewById(R.id.seek_bar);
-        mBtnPlayPause = findViewById(R.id.btn_play);
     }
 
     private void initEvent() {
-        mBtnPlayPause.setOnClickListener(new View.OnClickListener() {
+        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onClick(View v) {
-                if (mIsPlaying) {
-                    mIsPlaying = false;
-                    mBtnPlayPause.setText("播放");
-                    play();
-                } else {
-                    mIsPlaying = true;
-                    mBtnPlayPause.setText("暂停");
-                    pause();
-                }
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
     }
 
-    private void play() {
-
+    private void checkPermission() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                    checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[] {
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                }, 102);
+            }
+        }
     }
 
-    private void pause() {
-
+    public void play(View v) {
+        mVideoPlayer.prepare();
     }
 }
