@@ -13,6 +13,7 @@ public:
     virtual void play();
     virtual void stop();
     void decodePacket();
+    void synchronizeFrame();
 
 private:
     pthread_t pid_video_play;

@@ -3,6 +3,10 @@
 //
 
 #include "VideoChannel.h"
+extern "C" {
+#include "libswscale/swscale.h"
+#include "libavutil/imgutils.h"
+}
 
 VideoChannel::VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext)
         : BaseChannel(id, javaCallHelper, codecContext) {
@@ -17,7 +21,7 @@ void *decode_(void *args) {
 
 void *synchronize_(void *args) {
     auto *videoChannel = static_cast<VideoChannel *>(args);
-    videoChannel->decodePacket();
+    videoChannel->synchronizeFrame();
     return nullptr;
 }
 
@@ -27,14 +31,15 @@ void VideoChannel::play() {
     isPlaying = true;
 
     pthread_create(&pid_video_play, nullptr, decode_, this);
+    pthread_create(&pid_synchronize, nullptr, synchronize_, this);
 }
 
 void VideoChannel::stop() {
 
 }
 
+// 解码线程
 void VideoChannel::decodePacket() {
-    // 解码线程
     AVPacket *packet = nullptr;
     while (isPlaying) {
         int ret = pkt_queue.deQueue(packet);
@@ -63,5 +68,34 @@ void VideoChannel::decodePacket() {
         while (frame_queue.size() > 100 && isPlaying) {
             av_usleep(1000 * 10);
         }
+    }
+    releaseAVPacket(packet);
+}
+
+// 播放线程
+void VideoChannel::synchronizeFrame() {
+    SwsContext *swsContext = sws_getContext(
+            avCodecContext->width, avCodecContext->height, avCodecContext->pix_fmt,
+            avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGBA,
+            SWS_BILINEAR, nullptr, nullptr, nullptr);
+
+    uint8_t *dst_data[4]; // argb
+    int dst_linesize[4];
+    // 声明一个容器，一帧大小
+    av_image_alloc(dst_data, dst_linesize,
+                    avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGBA, 1);
+
+    AVFrame *frame = nullptr;
+    while (isPlaying) {
+        int ret = frame_queue.deQueue(frame);
+        if (!isPlaying) {
+            break;
+        }
+        if (!ret) {
+            continue;
+        }
+
+        sws_scale(swsContext, frame->data, frame->linesize, 0,
+                    frame->height, dst_data, dst_linesize);
     }
 }
