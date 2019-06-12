@@ -12,6 +12,7 @@
 extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavutil/frame.h"
+#include "libavutil/time.h"
 }
 
 class BaseChannel {
@@ -28,6 +29,20 @@ public:
         pkt_queue.clear();
         frame_queue.clear();
         LOGE("释放队列：%d, %d", pkt_queue.size(), frame_queue.size());
+    };
+
+    static void releaseAVPacket(AVPacket *&packet) {
+        if (packet) {
+            av_packet_free(&packet);
+            packet = nullptr;
+        }
+    };
+
+    static void releaseAVFrame(AVFrame *&frame) {
+        if (frame) {
+            av_frame_free(&frame);
+            frame = nullptr;
+        }
     };
 
     virtual void play() = 0;

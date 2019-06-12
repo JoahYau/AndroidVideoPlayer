@@ -10,10 +10,13 @@
 class VideoChannel : public BaseChannel {
 public:
     VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext);
-
     virtual void play();
-
     virtual void stop();
+    void decodePacket();
+
+private:
+    pthread_t pid_video_play;
+    pthread_t pid_synchronize;
 };
 
 
