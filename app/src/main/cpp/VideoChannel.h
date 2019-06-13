@@ -7,6 +7,8 @@
 
 #include "BaseChannel.h"
 
+typedef void (*RenderFrame) (uint8_t *data, int linesize, int width, int height);
+
 class VideoChannel : public BaseChannel {
 public:
     VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext);
@@ -14,10 +16,12 @@ public:
     virtual void stop();
     void decodePacket();
     void synchronizeFrame();
+    void setRenderCallback(RenderFrame renderFrame);
 
 private:
     pthread_t pid_video_play;
     pthread_t pid_synchronize;
+    RenderFrame renderFrame;
 };
 
 

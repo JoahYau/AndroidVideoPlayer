@@ -65,6 +65,7 @@ void VideoChannel::decodePacket() {
 
         // 压缩数据，解压
         // frame队列也要限制
+        frame_queue.enQueue(frame);
         while (frame_queue.size() > 100 && isPlaying) {
             av_usleep(1000 * 10);
         }
@@ -97,5 +98,21 @@ void VideoChannel::synchronizeFrame() {
 
         sws_scale(swsContext, frame->data, frame->linesize, 0,
                     frame->height, dst_data, dst_linesize);
+        if (renderFrame) {
+            renderFrame(dst_data[0], dst_linesize[0], avCodecContext->width, avCodecContext->height);
+        }
+        // 16ms播放一帧
+        LOGE("解码一帧数据");
+        av_usleep(16 * 1000);
+        releaseAVFrame(frame);
     }
+
+    isPlaying = false;
+    av_freep(&dst_data[0]);
+    releaseAVFrame(frame);
+    sws_freeContext(swsContext);
+}
+
+void VideoChannel::setRenderCallback(RenderFrame renderFrame) {
+    this->renderFrame = renderFrame;
 }

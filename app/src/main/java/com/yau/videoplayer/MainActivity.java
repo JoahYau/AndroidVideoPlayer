@@ -33,12 +33,6 @@ public class MainActivity extends AppCompatActivity {
         initView();
         initEvent();
         checkPermission();
-
-        File file = new File(Environment.getExternalStorageDirectory(), "input.mp4");
-        if (!file.exists()) {
-            throw new IllegalArgumentException("=======================文件不存在");
-        }
-        mVideoPlayer.setDataSource(file.getAbsolutePath());
     }
 
     private void initView() {
@@ -90,6 +84,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void play(View v) {
+        File file = new File(Environment.getExternalStorageDirectory(), "input.mp4");
+        if (!file.exists()) {
+            throw new IllegalArgumentException("=======================文件不存在");
+        }
+        mVideoPlayer.setDataSource(file.getAbsolutePath());
         mVideoPlayer.prepare();
     }
 }

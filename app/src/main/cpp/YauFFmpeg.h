@@ -25,6 +25,7 @@ public:
     void prepareFFmpeg();
     void start();
     void play();
+    void setRenderCallback(RenderFrame renderFrame);
 
 private:
     bool isPlaying;
@@ -35,6 +36,7 @@ private:
     AudioChannel *audioChannel;
     AVFormatContext *formatContext;
     JavaCallHelper *javaCallHelper;
+    RenderFrame renderFrame;
 };
 
 

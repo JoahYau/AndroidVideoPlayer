@@ -89,6 +89,7 @@ void YauFFmpeg::prepareFFmpeg() {
         } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             // 视频
             videoChannel = new VideoChannel(i, javaCallHelper, codecContext);
+            videoChannel->setRenderCallback(renderFrame);
         }
     }
 
@@ -127,7 +128,7 @@ void YauFFmpeg::play() {
         ret = av_read_frame(formatContext, packet);
         if (ret == 0) {
             if (audioChannel && packet->stream_index == audioChannel->channelId) {
-                audioChannel->pkt_queue.enQueue(packet);
+//                audioChannel->pkt_queue.enQueue(packet);
             } else if (videoChannel && packet->stream_index == videoChannel->channelId) {
                 videoChannel->pkt_queue.enQueue(packet);
             }
@@ -149,4 +150,8 @@ void YauFFmpeg::play() {
     if (videoChannel) {
         videoChannel->stop();
     }
+}
+
+void YauFFmpeg::setRenderCallback(RenderFrame renderFrame) {
+    this->renderFrame = renderFrame;
 }
