@@ -8,9 +8,32 @@ extern "C" {
 #include "libavutil/imgutils.h"
 }
 
+void dropPacket(queue<AVPacket *> &q) {
+    while (!q.empty()) {
+        LOGE("=========丢帧==========");
+
+        AVPacket *packet = q.front();
+        if (packet->flags != AV_PKT_FLAG_KEY) {
+            q.pop();
+            BaseChannel::releaseAVPacket(packet);
+        } else {
+            break;
+        }
+    }
+}
+
+void dropFrame(queue<AVFrame *> &q) {
+    if (!q.empty()) {
+        AVFrame *frame = q.front();
+        q.pop();
+        BaseChannel::releaseAVFrame(frame);
+    }
+}
+
 VideoChannel::VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext, AVRational time_base)
         : BaseChannel(id, javaCallHelper, codecContext, time_base) {
-
+    frame_queue.setReleaseHandle(releaseAVFrame);
+    frame_queue.setSyncHandle(dropFrame);
 }
 
 void *decode_(void *args) {
@@ -104,13 +127,33 @@ void VideoChannel::synchronizeFrame() {
         LOGE("解码一帧数据");
 
         clock = frame->pts * av_q2d(time_base);
-        // 每帧延时时间
-        double frame_delays = 1.0 / fps;
         double audio_clock = audioChannel->clock;
+        // 每帧延时时间
+        double frame_delay = 1.0 / fps;
+        // 解码时间，计算方法参考repeat_pict的注释
+        double extra_delay = frame->repeat_pict / (2 * fps);
+        double delay = frame_delay + extra_delay;
         double diff = clock - audio_clock;
         LOGE("相差--------------->%d", diff);
-
-        av_usleep((frame_delays + diff) * 1000 * 1000);
+        if (clock > audio_clock) {
+            // 视频超前
+            if (diff > 1) {
+                av_usleep(delay * 2 * 1000);
+            } else {
+                av_usleep((delay + diff) * 1000 * 1000);
+            }
+        } else {
+            // 视频落后
+            if (diff > 1) {
+                // 不休眠
+            } else if (diff >= 0.05) {
+                // 需要追赶，丢帧
+                releaseAVFrame(frame);
+                frame_queue.sync();
+            } else {
+                av_usleep((delay + diff) * 1000 * 1000);
+            }
+        }
 
         releaseAVFrame(frame);
     }
