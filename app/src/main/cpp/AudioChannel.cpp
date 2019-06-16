@@ -4,8 +4,8 @@
 
 #include "AudioChannel.h"
 
-AudioChannel::AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext)
-        : BaseChannel(id, javaCallHelper, codecContext) {
+AudioChannel::AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext, AVRational time_base)
+        : BaseChannel(id, javaCallHelper, codecContext, time_base) {
     out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
     out_sample_size = av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
     out_sample_rate = 44100;
@@ -195,6 +195,10 @@ int AudioChannel::getPcm() {
                              (const uint8_t **) frame->data, frame->nb_samples);
         // 转换后多少数据，44100 * 2 * 2
         data_size = nb * out_channels * out_sample_size;
+
+        // pts代表时间进度，time_base是单位
+        clock = frame->pts * av_q2d(time_base);
+
         break;
     }
     releaseAVFrame(frame);

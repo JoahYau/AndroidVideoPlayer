@@ -8,8 +8,8 @@ extern "C" {
 #include "libavutil/imgutils.h"
 }
 
-VideoChannel::VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext)
-        : BaseChannel(id, javaCallHelper, codecContext) {
+VideoChannel::VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext, AVRational time_base)
+        : BaseChannel(id, javaCallHelper, codecContext, time_base) {
 
 }
 
@@ -101,9 +101,17 @@ void VideoChannel::synchronizeFrame() {
         if (renderFrame) {
             renderFrame(dst_data[0], dst_linesize[0], avCodecContext->width, avCodecContext->height);
         }
-        // 16ms播放一帧
         LOGE("解码一帧数据");
-        av_usleep(16 * 1000);
+
+        clock = frame->pts * av_q2d(time_base);
+        // 每帧延时时间
+        double frame_delays = 1.0 / fps;
+        double audio_clock = audioChannel->clock;
+        double diff = clock - audio_clock;
+        LOGE("相差--------------->%d", diff);
+
+        av_usleep((frame_delays + diff) * 1000 * 1000);
+
         releaseAVFrame(frame);
     }
 
@@ -115,4 +123,8 @@ void VideoChannel::synchronizeFrame() {
 
 void VideoChannel::setRenderCallback(RenderFrame renderFrame) {
     this->renderFrame = renderFrame;
+}
+
+void VideoChannel::setFps(int fps) {
+    this->fps = fps;
 }

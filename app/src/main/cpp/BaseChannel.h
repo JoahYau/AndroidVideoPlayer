@@ -17,9 +17,10 @@ extern "C" {
 
 class BaseChannel {
 public:
-    BaseChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext) : channelId(id),
+    BaseChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext, AVRational time_base) : channelId(id),
                                                                                             javaCallHelper(javaCallHelper),
-                                                                                            avCodecContext(avCodecContext) {};
+                                                                                            avCodecContext(avCodecContext),
+                                                                                            time_base(time_base) {};
     virtual ~BaseChannel() {
         if (avCodecContext) {
             avcodec_close(avCodecContext);
@@ -54,6 +55,8 @@ public:
     volatile bool isPlaying;
     AVCodecContext *avCodecContext;
     JavaCallHelper *javaCallHelper;
+    AVRational time_base;
+    double clock = 0;
 };
 
 

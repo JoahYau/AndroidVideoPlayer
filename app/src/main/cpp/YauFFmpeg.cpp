@@ -57,6 +57,9 @@ void YauFFmpeg::prepareFFmpeg() {
 
     for (int i = 0; i < formatContext->nb_streams; ++i) {
         AVCodecParameters *codecpar = formatContext->streams[i]->codecpar;
+
+        AVStream *stream = formatContext->streams[i];
+
         // 找到解码器
         AVCodec *codec = avcodec_find_decoder(codecpar->codec_id);
         if (!codec) {
@@ -85,11 +88,15 @@ void YauFFmpeg::prepareFFmpeg() {
 
         if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             // 音频
-            audioChannel = new AudioChannel(i, javaCallHelper, codecContext);
+            audioChannel = new AudioChannel(i, javaCallHelper, codecContext, stream->time_base);
         } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            AVRational frame_rate = stream->avg_frame_rate;
+            int fps = static_cast<int>(av_q2d(frame_rate));
+
             // 视频
-            videoChannel = new VideoChannel(i, javaCallHelper, codecContext);
+            videoChannel = new VideoChannel(i, javaCallHelper, codecContext, stream->time_base);
             videoChannel->setRenderCallback(renderFrame);
+            videoChannel->setFps(fps);
         }
     }
 
@@ -99,6 +106,7 @@ void YauFFmpeg::prepareFFmpeg() {
         return;
     }
 
+    videoChannel->audioChannel = audioChannel;
     javaCallHelper->onPrepare(THREAD_CHILD);
 }
 

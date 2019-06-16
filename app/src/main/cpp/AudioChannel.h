@@ -13,7 +13,7 @@ extern "C" {
 
 class AudioChannel : public BaseChannel {
 public:
-    AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext);
+    AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext, AVRational time_base);
     virtual void play();
     virtual void stop();
     void initOpenSL();
