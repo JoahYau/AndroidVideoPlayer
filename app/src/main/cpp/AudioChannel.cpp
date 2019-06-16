@@ -6,7 +6,10 @@
 
 AudioChannel::AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext)
         : BaseChannel(id, javaCallHelper, codecContext) {
-
+    out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
+    out_sample_size = av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+    out_sample_rate = 44100;
+    buffer = (uint8_t *) malloc(out_sample_rate * out_sample_size * out_channels);
 }
 
 void *audioPlay_(void *args) {
@@ -17,16 +20,23 @@ void *audioPlay_(void *args) {
 
 void *audioDecode_(void *args) {
     auto audioChannel = static_cast<AudioChannel *>(args);
+    audioChannel->decode();
     return nullptr;
 }
 
 void AudioChannel::play() {
+    swr_ctx = swr_alloc_set_opts(0, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, out_sample_rate,
+                        avCodecContext->channel_layout,
+                        avCodecContext->sample_fmt,
+                        avCodecContext->sample_rate, 0, 0);
+    swr_init(swr_ctx);
+
     pkt_queue.setWork(1);
     frame_queue.setWork(1);
     isPlaying = true;
 
-    pthread_create(pid_audio_play, nullptr, audioPlay_, this);
-    pthread_create(pid_audio_decode, nullptr, audioPlay_, this);
+    pthread_create(&pid_audio_play, nullptr, audioPlay_, this);
+    pthread_create(&pid_audio_decode, nullptr, audioDecode_, this);
 }
 
 void AudioChannel::stop() {
@@ -35,7 +45,11 @@ void AudioChannel::stop() {
 
 // 当第一次手动调用该方法进行启动后，后面会不断回调
 void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
-    
+    auto audioChannel = static_cast<AudioChannel *>(context);
+    int dataLen = audioChannel->getPcm();
+    if (dataLen > 0) {
+        (*bq)->Enqueue(bq, audioChannel->buffer, dataLen);
+    }
 }
 
 void AudioChannel::initOpenSL() {
@@ -84,7 +98,7 @@ void AudioChannel::initOpenSL() {
 
     // ------------------------------------------------------------
     // 创建播放器
-    SLDataLocator_AndroidSimpleBufferQueue androidQueue = {SL_DATALOCATOR_ANDROIDBUFFERQUEUE, 2};
+    SLDataLocator_AndroidSimpleBufferQueue androidQueue = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
     SLDataFormat_PCM pcm = {SL_DATAFORMAT_PCM, // 播放pcm格式的数据
                             2, // 双声道
                             SL_SAMPLINGRATE_44_1, // 44.1KHz采样频率
@@ -125,4 +139,64 @@ void AudioChannel::initOpenSL() {
 
     // ------------------------------------------------------------
     bqPlayerCallback(bqPlayerBufferQueue, this);
+}
+
+void AudioChannel::decode() {
+    AVPacket *packet = nullptr;
+    while (isPlaying) {
+        int ret = pkt_queue.deQueue(packet);
+        if (!isPlaying) {
+            break;
+        }
+        if (!ret) {
+            continue;
+        }
+
+        ret = avcodec_send_packet(avCodecContext, packet);
+        if (ret == AVERROR(EAGAIN)) {
+            continue;
+        } else if (ret < 0) {
+            break;
+        }
+
+        AVFrame *frame = av_frame_alloc();
+        ret = avcodec_receive_frame(avCodecContext, frame);
+        if (ret == AVERROR(EAGAIN)) {
+            continue;
+        } else if (ret < 0) {
+            break;
+        }
+
+        frame_queue.enQueue(frame);
+        while (frame_queue.size() > 100 && isPlaying) {
+            av_usleep(10 * 1000);
+        }
+    }
+}
+
+int AudioChannel::getPcm() {
+    AVFrame *frame = nullptr;
+    int data_size = 0;
+    while (isPlaying) {
+        int ret = frame_queue.deQueue(frame);
+        if (ret == AVERROR(EAGAIN)) {
+            continue;
+        } else if (ret < 0) {
+            break;
+        }
+
+        uint64_t dst_nb_samples = av_rescale_rnd(
+                swr_get_delay(swr_ctx, frame->sample_rate) + frame->nb_samples,
+                out_sample_rate,
+                frame->sample_rate,
+                AV_ROUND_UP);
+        // 转换，返回值为转换后的sample个数
+        int nb = swr_convert(swr_ctx, &buffer, dst_nb_samples,
+                             (const uint8_t **) frame->data, frame->nb_samples);
+        // 转换后多少数据，44100 * 2 * 2
+        data_size = nb * out_channels * out_sample_size;
+        break;
+    }
+    releaseAVFrame(frame);
+    return data_size;
 }
