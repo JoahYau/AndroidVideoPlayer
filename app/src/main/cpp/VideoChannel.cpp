@@ -138,7 +138,7 @@ void VideoChannel::synchronizeFrame() {
         if (clock > audio_clock) {
             // 视频超前
             if (diff > 1) {
-                av_usleep(delay * 2 * 1000);
+                av_usleep(delay * 2 * 1000 * 1000);
             } else {
                 av_usleep((delay + diff) * 1000 * 1000);
             }
