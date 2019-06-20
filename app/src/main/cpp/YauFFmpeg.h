@@ -27,6 +27,7 @@ public:
     void play();
     void setRenderCallback(RenderFrame renderFrame);
     int getDuration();
+    void seekTo(int progress);
 
 private:
     bool isPlaying;
@@ -38,9 +39,8 @@ private:
     AVFormatContext *formatContext;
     JavaCallHelper *javaCallHelper;
     RenderFrame renderFrame;
-
-public:
-    int duration;
+    int duration = 0;
+    pthread_mutex_t seekMutex;
 };
 
 

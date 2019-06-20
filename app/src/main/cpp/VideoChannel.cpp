@@ -32,7 +32,6 @@ void dropFrame(queue<AVFrame *> &q) {
 
 VideoChannel::VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext, AVRational time_base)
         : BaseChannel(id, javaCallHelper, codecContext, time_base) {
-    frame_queue.setReleaseHandle(releaseAVFrame);
     frame_queue.setSyncHandle(dropFrame);
 }
 
@@ -49,8 +48,7 @@ void *synchronize_(void *args) {
 }
 
 void VideoChannel::play() {
-    pkt_queue.setWork(1);
-    frame_queue.setWork(1);
+    startWork();
     isPlaying = true;
 
     pthread_create(&pid_video_play, nullptr, decode_, this);

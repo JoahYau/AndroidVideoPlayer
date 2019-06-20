@@ -31,8 +31,7 @@ void AudioChannel::play() {
                         avCodecContext->sample_rate, 0, 0);
     swr_init(swr_ctx);
 
-    pkt_queue.setWork(1);
-    frame_queue.setWork(1);
+    startWork();
     isPlaying = true;
 
     pthread_create(&pid_audio_play, nullptr, audioPlay_, this);

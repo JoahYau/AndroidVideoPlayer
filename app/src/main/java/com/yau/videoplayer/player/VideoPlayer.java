@@ -53,6 +53,15 @@ public class VideoPlayer implements SurfaceHolder.Callback {
         nStart();
     }
 
+    public void seekTo(final int progress) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                nSeekTo(progress);
+            }
+        }).start();
+    }
+
     public int getDuration() {
         return nGetDuration();
     }
@@ -60,6 +69,7 @@ public class VideoPlayer implements SurfaceHolder.Callback {
     private native void nPrepare(String dataSource);
     private native void nSetSurface(Surface surface);
     private native void nStart();
+    private native void nSeekTo(int progress);
     private native int nGetDuration();
 
     public void onPrepare() {

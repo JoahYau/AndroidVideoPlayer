@@ -22,7 +22,7 @@ void *play_(void *args) {
 YauFFmpeg::YauFFmpeg(JavaCallHelper *javaCallHelper_, const char *dataSource) : javaCallHelper(javaCallHelper_) {
     url = new char[strlen(dataSource) + 1];
     strcpy(url, dataSource);
-    duration = 0;
+    pthread_mutex_init(&seekMutex, 0);
 }
 
 YauFFmpeg::~YauFFmpeg() {
@@ -169,4 +169,29 @@ void YauFFmpeg::setRenderCallback(RenderFrame renderFrame) {
 
 int YauFFmpeg::getDuration() {
     return duration;
+}
+
+void YauFFmpeg::seekTo(int progress) {
+    if (progress < 0 || progress >= duration) {
+        return;
+    }
+    if (!formatContext) {
+        return;
+    }
+
+    pthread_mutex_lock(&seekMutex);
+
+    // 单位微秒
+    int64_t seek = progress * 1000000;
+    // -1代表音视频一起拖动，AVSEEK_FLAG_BACKWARD表示异步执行
+    av_seek_frame(formatContext, -1, seek, AVSEEK_FLAG_BACKWARD);
+
+    if (audioChannel) {
+        audioChannel->clear();
+    }
+    if (videoChannel) {
+        videoChannel->clear();
+    }
+
+    pthread_mutex_unlock(&seekMutex);
 }

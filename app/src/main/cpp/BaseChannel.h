@@ -20,7 +20,10 @@ public:
     BaseChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *avCodecContext, AVRational time_base) : channelId(id),
                                                                                             javaCallHelper(javaCallHelper),
                                                                                             avCodecContext(avCodecContext),
-                                                                                            time_base(time_base) {};
+                                                                                            time_base(time_base) {
+        pkt_queue.setReleaseHandle(releaseAVPacket);
+        frame_queue.setReleaseHandle(releaseAVFrame);
+    };
     virtual ~BaseChannel() {
         if (avCodecContext) {
             avcodec_close(avCodecContext);
@@ -45,6 +48,23 @@ public:
             frame = nullptr;
         }
     };
+
+    void clear() {
+        stopWork();
+        pkt_queue.clear();
+        frame_queue.clear();
+        startWork();
+    }
+
+    void startWork() {
+        pkt_queue.setWork(1);
+        frame_queue.setWork(1);
+    }
+
+    void stopWork() {
+        pkt_queue.setWork(0);
+        frame_queue.setWork(0);
+    }
 
     virtual void play() = 0;
     virtual void stop() = 0;

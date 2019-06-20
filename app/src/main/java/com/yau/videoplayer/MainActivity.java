@@ -6,7 +6,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
@@ -22,6 +21,8 @@ public class MainActivity extends AppCompatActivity {
 
     private VideoPlayer mVideoPlayer;
     private int mProgress;
+    private boolean mIsTouching;
+    private boolean mIsSeeking;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,12 +54,16 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
+                mIsTouching = true;
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                mIsTouching = false;
+                mIsSeeking = true;
 
+                mProgress = (int) (mVideoPlayer.getDuration() * (1.0 * seekBar.getProgress() / seekBar.getMax()));
+                mVideoPlayer.seekTo(mProgress);
             }
         });
 
@@ -67,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
             public void onPrepare() {
                 mVideoPlayer.start();
                 if (mVideoPlayer.getDuration() != 0) {
-                    Log.e("player", "onPrepare: " + mVideoPlayer.getDuration());
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
