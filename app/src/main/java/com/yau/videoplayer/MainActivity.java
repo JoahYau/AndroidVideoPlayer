@@ -81,6 +81,25 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mVideoPlayer.setOnProgressListener(new VideoPlayer.OnProgressListener() {
+            @Override
+            public void onProgress(final int progress) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        int duration = mVideoPlayer.getDuration();
+                        if (duration <= 0) {
+                            return;
+                        }
+                        if (mIsTouching) {
+                            return;
+                        }
+                        mSeekBar.setProgress((int) (1.0 * progress  / duration * mSeekBar.getMax()));
+                    }
+                });
+            }
+        });
     }
 
     private void checkPermission() {

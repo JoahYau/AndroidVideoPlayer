@@ -200,6 +200,7 @@ int AudioChannel::getPcm() {
 
         break;
     }
+    javaCallHelper->onProgress(THREAD_CHILD, clock);
     releaseAVFrame(frame);
     return data_size;
 }
