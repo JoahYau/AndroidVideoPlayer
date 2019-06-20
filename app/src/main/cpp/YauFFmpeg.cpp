@@ -163,7 +163,7 @@ int YauFFmpeg::getDuration() {
     return duration;
 }
 
-void YauFFmpeg::seekTo(int progress) {
+void YauFFmpeg::seekTo(double progress) {
     if (progress < 0 || progress >= duration) {
         return;
     }
@@ -174,7 +174,7 @@ void YauFFmpeg::seekTo(int progress) {
     pthread_mutex_lock(&seekMutex);
 
     // 单位微秒
-    int64_t seek = progress * 1000000;
+    int64_t seek = static_cast<int64_t>(progress * 1000000);
     // -1代表音视频一起拖动，AVSEEK_FLAG_BACKWARD表示异步执行
     av_seek_frame(formatContext, -1, seek, AVSEEK_FLAG_BACKWARD);
 
@@ -203,4 +203,11 @@ void YauFFmpeg::stop() {
         avformat_free_context(formatContext);
         formatContext = nullptr;
     }
+}
+
+double YauFFmpeg::getProgress() {
+    if (audioChannel) {
+        return audioChannel->getProgress();
+    }
+    return 0;
 }

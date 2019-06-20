@@ -209,3 +209,7 @@ int AudioChannel::getPcm() {
     releaseAVFrame(frame);
     return data_size;
 }
+
+double AudioChannel::getProgress() {
+    return clock;
+}

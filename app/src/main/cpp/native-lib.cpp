@@ -13,6 +13,7 @@ JavaVM *javaVM = nullptr;
 
 ANativeWindow *window = nullptr;
 YauFFmpeg *yauFFmpeg;
+double lastProgress = 0;
 
 // 视频渲染
 void renderFrame(uint8_t *data, int linesize, int width, int height) {
@@ -73,6 +74,9 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_yau_videoplayer_player_VideoPlayer_nStart(JNIEnv *env, jobject instance) {
     if (yauFFmpeg) {
         yauFFmpeg->start();
+        if (lastProgress > 0) {
+            yauFFmpeg->seekTo(lastProgress);
+        }
     }
 }
 
@@ -94,6 +98,7 @@ Java_com_yau_videoplayer_player_VideoPlayer_nSeekTo(JNIEnv *env, jobject instanc
 extern "C" JNIEXPORT void JNICALL
 Java_com_yau_videoplayer_player_VideoPlayer_nStop(JNIEnv *env, jobject instance) {
     if (yauFFmpeg) {
+        lastProgress = yauFFmpeg->getProgress();
         yauFFmpeg->stop();
         DELETE(yauFFmpeg);
     }

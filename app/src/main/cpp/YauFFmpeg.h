@@ -27,9 +27,9 @@ public:
     void play();
     void setRenderCallback(RenderFrame renderFrame);
     int getDuration();
-    void seekTo(int progress);
-
+    void seekTo(double progress);
     void stop();
+    double getProgress();
 
 public:
     bool isPlaying;

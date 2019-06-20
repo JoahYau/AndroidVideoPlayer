@@ -19,6 +19,7 @@ public:
     void initOpenSL();
     void decode();
     int getPcm();
+    double getProgress();
 
 private:
     pthread_t pid_audio_play;
