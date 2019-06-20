@@ -13,8 +13,8 @@ typedef void (*RenderFrame) (uint8_t *data, int linesize, int width, int height)
 class VideoChannel : public BaseChannel {
 public:
     VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContext *codecContext, AVRational time_base);
+    ~VideoChannel();
     virtual void play();
-    virtual void stop();
     void decodePacket();
     void synchronizeFrame();
     void setRenderCallback(RenderFrame renderFrame);

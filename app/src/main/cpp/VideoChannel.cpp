@@ -35,6 +35,13 @@ VideoChannel::VideoChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContex
     frame_queue.setSyncHandle(dropFrame);
 }
 
+VideoChannel::~VideoChannel() {
+    isPlaying = false;
+    pthread_join(pid_video_play, nullptr);
+    pthread_join(pid_synchronize, nullptr);
+    javaCallHelper = nullptr;
+}
+
 void *decode_(void *args) {
     auto *videoChannel = static_cast<VideoChannel *>(args);
     videoChannel->decodePacket();
@@ -53,10 +60,6 @@ void VideoChannel::play() {
 
     pthread_create(&pid_video_play, nullptr, decode_, this);
     pthread_create(&pid_synchronize, nullptr, synchronize_, this);
-}
-
-void VideoChannel::stop() {
-
 }
 
 // 解码线程

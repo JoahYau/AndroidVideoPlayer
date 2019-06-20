@@ -37,6 +37,12 @@ public class MainActivity extends AppCompatActivity {
         checkPermission();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mVideoPlayer.release();
+    }
+
     private void initView() {
         mSeekBar = findViewById(R.id.seek_bar);
 
@@ -123,5 +129,9 @@ public class MainActivity extends AppCompatActivity {
         }
         mVideoPlayer.setDataSource(file.getAbsolutePath());
         mVideoPlayer.prepare();
+    }
+
+    public void stop(View view) {
+        mVideoPlayer.stop();
     }
 }

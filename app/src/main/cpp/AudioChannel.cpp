@@ -12,6 +12,16 @@ AudioChannel::AudioChannel(int id, JavaCallHelper *javaCallHelper, AVCodecContex
     buffer = (uint8_t *) malloc(out_sample_rate * out_sample_size * out_channels);
 }
 
+AudioChannel::~AudioChannel() {
+    isPlaying = false;
+    pthread_join(pid_audio_play, nullptr);
+    pthread_join(pid_audio_decode, nullptr);
+
+    free(buffer);
+    buffer = nullptr;
+    javaCallHelper = nullptr;
+}
+
 void *audioPlay_(void *args) {
     auto audioChannel = static_cast<AudioChannel *>(args);
     audioChannel->initOpenSL();
@@ -36,10 +46,6 @@ void AudioChannel::play() {
 
     pthread_create(&pid_audio_play, nullptr, audioPlay_, this);
     pthread_create(&pid_audio_decode, nullptr, audioDecode_, this);
-}
-
-void AudioChannel::stop() {
-
 }
 
 // 当第一次手动调用该方法进行启动后，后面会不断回调
@@ -184,23 +190,22 @@ int AudioChannel::getPcm() {
             break;
         }
 
-        uint64_t dst_nb_samples = av_rescale_rnd(
-                swr_get_delay(swr_ctx, frame->sample_rate) + frame->nb_samples,
-                out_sample_rate,
-                frame->sample_rate,
-                AV_ROUND_UP);
+        uint64_t dst_nb_samples = static_cast<uint64_t>(av_rescale_rnd(
+                        swr_get_delay(swr_ctx, frame->sample_rate) + frame->nb_samples,
+                        out_sample_rate,
+                        frame->sample_rate,
+                        AV_ROUND_UP));
         // 转换，返回值为转换后的sample个数
-        int nb = swr_convert(swr_ctx, &buffer, dst_nb_samples,
+        int nb = swr_convert(swr_ctx, &buffer, static_cast<int>(dst_nb_samples),
                              (const uint8_t **) frame->data, frame->nb_samples);
         // 转换后多少数据，44100 * 2 * 2
         data_size = nb * out_channels * out_sample_size;
 
         // pts代表时间进度，time_base是单位
         clock = frame->pts * av_q2d(time_base);
-
+        javaCallHelper->onProgress(THREAD_CHILD, static_cast<int>(clock));
         break;
     }
-    javaCallHelper->onProgress(THREAD_CHILD, clock);
     releaseAVFrame(frame);
     return data_size;
 }

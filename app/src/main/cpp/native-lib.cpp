@@ -90,3 +90,25 @@ Java_com_yau_videoplayer_player_VideoPlayer_nSeekTo(JNIEnv *env, jobject instanc
         yauFFmpeg->seekTo(proress);
     }
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_yau_videoplayer_player_VideoPlayer_nStop(JNIEnv *env, jobject instance) {
+    if (yauFFmpeg) {
+        yauFFmpeg->stop();
+        DELETE(yauFFmpeg);
+    }
+    DELETE(javaCallHelper);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_yau_videoplayer_player_VideoPlayer_nRelease(JNIEnv *env, jobject instance) {
+    if (yauFFmpeg) {
+        yauFFmpeg->stop();
+        DELETE(yauFFmpeg);
+    }
+    DELETE(javaCallHelper);
+    if (window) {
+        ANativeWindow_release(window);
+        window = nullptr;
+    }
+}

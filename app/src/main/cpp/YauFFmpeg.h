@@ -29,7 +29,9 @@ public:
     int getDuration();
     void seekTo(int progress);
 
-private:
+    void stop();
+
+public:
     bool isPlaying;
     char *url;
     pthread_t pid_prepare;

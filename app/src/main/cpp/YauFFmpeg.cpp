@@ -22,13 +22,13 @@ void *play_(void *args) {
 YauFFmpeg::YauFFmpeg(JavaCallHelper *javaCallHelper_, const char *dataSource) : javaCallHelper(javaCallHelper_) {
     url = new char[strlen(dataSource) + 1];
     strcpy(url, dataSource);
-    pthread_mutex_init(&seekMutex, 0);
+    pthread_mutex_init(&seekMutex, nullptr);
 }
 
 YauFFmpeg::~YauFFmpeg() {
-    if (formatContext) {
-        avformat_close_input(&formatContext);
-    }
+    pthread_mutex_destroy(&seekMutex);
+    javaCallHelper = nullptr;
+    DELETE(url);
 }
 
 void YauFFmpeg::prepare() {
@@ -56,7 +56,7 @@ void YauFFmpeg::prepareFFmpeg() {
         return;
     }
 
-    duration = formatContext->duration / 1000000;
+    duration = static_cast<int>(formatContext->duration / 1000000);
 
     for (int i = 0; i < formatContext->nb_streams; ++i) {
         AVCodecParameters *codecpar = formatContext->streams[i]->codecpar;
@@ -153,14 +153,6 @@ void YauFFmpeg::play() {
             break;
         }
     }
-
-    isPlaying = false;
-    if (audioChannel) {
-        audioChannel->stop();
-    }
-    if (videoChannel) {
-        videoChannel->stop();
-    }
 }
 
 void YauFFmpeg::setRenderCallback(RenderFrame renderFrame) {
@@ -194,4 +186,21 @@ void YauFFmpeg::seekTo(int progress) {
     }
 
     pthread_mutex_unlock(&seekMutex);
+}
+
+void YauFFmpeg::stop() {
+    isPlaying = false;
+
+    // 关闭线程
+    pthread_join(pid_prepare, nullptr);
+    pthread_join(pid_play, nullptr);
+
+    // 释放解码层
+    DELETE(audioChannel);
+    DELETE(videoChannel);
+    if (formatContext) {
+        avformat_close_input(&formatContext);
+        avformat_free_context(formatContext);
+        formatContext = nullptr;
+    }
 }

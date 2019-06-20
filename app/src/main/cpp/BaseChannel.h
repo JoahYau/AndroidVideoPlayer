@@ -67,7 +67,6 @@ public:
     }
 
     virtual void play() = 0;
-    virtual void stop() = 0;
 
     SafeQueue<AVPacket *> pkt_queue;
     SafeQueue<AVFrame *> frame_queue;
