@@ -75,3 +75,10 @@ Java_com_yau_videoplayer_player_VideoPlayer_nStart(JNIEnv *env, jobject instance
         yauFFmpeg->start();
     }
 }
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_yau_videoplayer_player_VideoPlayer_nGetDuration(JNIEnv *env, jobject instance) {
+    if (yauFFmpeg) {
+        return yauFFmpeg->getDuration();
+    }
+}

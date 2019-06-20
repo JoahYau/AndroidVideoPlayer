@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
@@ -65,6 +66,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPrepare() {
                 mVideoPlayer.start();
+                if (mVideoPlayer.getDuration() != 0) {
+                    Log.e("player", "onPrepare: " + mVideoPlayer.getDuration());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mSeekBar.setVisibility(View.VISIBLE);
+                        }
+                    });
+                }
             }
         });
     }
@@ -84,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void play(View v) {
-        File file = new File(Environment.getExternalStorageDirectory(), "input2.mp4");
+        File file = new File(Environment.getExternalStorageDirectory(), "input.mp4");
         if (!file.exists()) {
             throw new IllegalArgumentException("=======================文件不存在");
         }

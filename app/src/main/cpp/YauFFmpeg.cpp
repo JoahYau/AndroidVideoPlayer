@@ -22,6 +22,7 @@ void *play_(void *args) {
 YauFFmpeg::YauFFmpeg(JavaCallHelper *javaCallHelper_, const char *dataSource) : javaCallHelper(javaCallHelper_) {
     url = new char[strlen(dataSource) + 1];
     strcpy(url, dataSource);
+    duration = 0;
 }
 
 YauFFmpeg::~YauFFmpeg() {
@@ -54,6 +55,8 @@ void YauFFmpeg::prepareFFmpeg() {
         javaCallHelper->onError(THREAD_CHILD, FFMPEG_CAN_NOT_FIND_STREAMS);
         return;
     }
+
+    duration = formatContext->duration / 1000000;
 
     for (int i = 0; i < formatContext->nb_streams; ++i) {
         AVCodecParameters *codecpar = formatContext->streams[i]->codecpar;
@@ -162,4 +165,8 @@ void YauFFmpeg::play() {
 
 void YauFFmpeg::setRenderCallback(RenderFrame renderFrame) {
     this->renderFrame = renderFrame;
+}
+
+int YauFFmpeg::getDuration() {
+    return duration;
 }

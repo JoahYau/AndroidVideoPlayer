@@ -53,9 +53,14 @@ public class VideoPlayer implements SurfaceHolder.Callback {
         nStart();
     }
 
+    public int getDuration() {
+        return nGetDuration();
+    }
+
     private native void nPrepare(String dataSource);
     private native void nSetSurface(Surface surface);
     private native void nStart();
+    private native int nGetDuration();
 
     public void onPrepare() {
         if (mOnPrepareListener != null) {

@@ -26,6 +26,7 @@ public:
     void start();
     void play();
     void setRenderCallback(RenderFrame renderFrame);
+    int getDuration();
 
 private:
     bool isPlaying;
@@ -37,6 +38,9 @@ private:
     AVFormatContext *formatContext;
     JavaCallHelper *javaCallHelper;
     RenderFrame renderFrame;
+
+public:
+    int duration;
 };
 
 
