@@ -1,4 +1,4 @@
-# VideoPlayer
+# AndroidVideoPlayer
 
 ## 0、说明
 
